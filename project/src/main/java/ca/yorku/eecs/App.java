@@ -14,6 +14,5 @@ public class App
         server.createContext("/api/v1/", handler::handle);
         server.start();
         System.out.printf("Server started on port %d...\n", PORT);
-        //I'm gay
     }
 }
