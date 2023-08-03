@@ -19,7 +19,15 @@ public class Neo4jMovies {
     }
 
     public void addActor(HttpExchange request) {
+        //check if it already exists
+        /*
+        *
+        * */
 
+        //send error 400 status code if repeated
+
+
+        //else, add the actor to db and send 200 status code
     }
 
     public void addMovie(HttpExchange request) {
@@ -53,7 +61,7 @@ public class Neo4jMovies {
     }
 
     public void computeBaconPath(HttpExchange request){
-
+        // comment test
     }
 
     public void close() {
