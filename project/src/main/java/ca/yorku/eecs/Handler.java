@@ -50,20 +50,12 @@ public class Handler implements HttpHandler{
                 System.out.println("We have found the Bacon path");
             }
             else
-                sendString(request, "Unimplemented method\n", 501);
+                Utils.sendString(request, "Unimplemented method\n", 501);
         } catch (Exception e) {
             e.printStackTrace();
-            sendString(request, "Server error\n", 500);
+            Utils.sendString(request, "Server error\n", 500);
         }
 
-    }
-
-    private void sendString(HttpExchange request, String data, int restCode)
-            throws IOException {
-        request.sendResponseHeaders(restCode, data.length());
-        OutputStream os = request.getResponseBody();
-        os.write(data.getBytes());
-        os.close();
     }
 }
 
