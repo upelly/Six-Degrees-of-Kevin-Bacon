@@ -15,7 +15,7 @@ public class Neo4jMovies {
     public Neo4jMovies() {
         uriDb = "bolt://localhost:7687"; // may need to change if you used a different port for your DBMS
         Config config = Config.builder().withoutEncryption().build();
-        driver = GraphDatabase.driver(uriDb, AuthTokens.basic("Neo4jMovies","12345678"), config);
+        driver = GraphDatabase.driver(uriDb, AuthTokens.basic("neo4j","12345678"), config);
     }
 
     public void addActor(HttpExchange request) {
