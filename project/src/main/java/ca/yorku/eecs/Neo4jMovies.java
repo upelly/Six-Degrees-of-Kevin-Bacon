@@ -5,6 +5,8 @@ import static org.neo4j.driver.v1.Values.parameters;
 import com.sun.net.httpserver.HttpExchange;
 import org.neo4j.driver.v1.*;
 
+import java.util.List;
+
 public class Neo4jMovies {
 
     private Driver driver;
@@ -29,6 +31,28 @@ public class Neo4jMovies {
     }
 
     public void getActor(HttpExchange request){
+
+    }
+
+    public void getMovie(HttpExchange request){
+
+    }
+
+    public void hasRelationship(HttpExchange request){
+
+    }
+
+    //We can compute the path in this helper and then use the list to determine
+    //the bacon number as well
+    public List<String> computeBaconHelper(HttpExchange request){
+        return null;
+    }
+
+    public void computeBaconNumber(HttpExchange request){
+
+    }
+
+    public void computeBaconPath(HttpExchange request){
 
     }
 
