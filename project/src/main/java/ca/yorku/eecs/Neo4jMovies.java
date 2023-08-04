@@ -23,19 +23,15 @@ public class Neo4jMovies {
 
     public void addActor(HttpExchange request) throws IOException, JSONException {
 
-        // Extract JSON data as a String from the request body
+        // Extract and parse JSON data from request body
         String requestBody = Utils.getBody(request);
-
-        // Parse the JSON data to access different parts of the information
         JSONObject jsonObject = new JSONObject(requestBody);
 
-        // Access individual fields in the JSON object
-
-        // Access individual fields in the JSON object with default values in case the key is missing
         String actorId = jsonObject.optString("actorId", null);
         String name = jsonObject.optString("name", null);
         boolean hasOscar = jsonObject.optBoolean("hasOscar");
 
+        //if improper formatting
         if (actorId == null || name == null){
             String response = "Improper formatting. Actor was not added.";
             Utils.sendString(request, response, 400);
@@ -43,7 +39,7 @@ public class Neo4jMovies {
 
         else {
             try (Session session = driver.session()) {
-                // Read operation: Check if the actorId already exists
+                //Check if the actorId already exists
                 try (Transaction tx = session.beginTransaction()) {
                     StatementResult result = tx.run("MATCH (a:Actor {actorId: $actorId}) RETURN a",
                             parameters("actorId", actorId));
@@ -55,8 +51,7 @@ public class Neo4jMovies {
                     }
                 }
 
-                // Write operation: Actor with the given actorId doesn't exist
-                // We can proceed with adding the new actor to the database.
+                //Actor with the given actorId doesn't exist
                 try (Transaction tx = session.beginTransaction()) {
                     tx.run("CREATE (a:Actor {actorId: $actorId, name: $name, hasOscar: $hasOscar})",
                             parameters("actorId", actorId, "name", name, "hasOscar", hasOscar));
@@ -64,15 +59,53 @@ public class Neo4jMovies {
                 }
 
                 String response = "Successfully added actor with id: " + actorId + " and name: " + name;
-                Utils.sendString(request, response, 400);
+                Utils.sendString(request, response, 200);
             }
         }
 
     }
 
-    public void addMovie(HttpExchange request) {
+    public void addMovie(HttpExchange request) throws IOException, JSONException {
+        // Extract and parse JSON data from request body
+        String requestBody = Utils.getBody(request);
+        JSONObject jsonObject = new JSONObject(requestBody);
 
+        String movieId = jsonObject.optString("movieId", null);
+        String name = jsonObject.optString("name", null);
+
+        //if improper formatting
+        if (movieId == null || name == null){
+            String response = "Improper formatting. Movie was not added.";
+            Utils.sendString(request, response, 400);
+        }
+
+        else {
+            try (Session session = driver.session()) {
+                //Check if the movieId already exists
+                try (Transaction tx = session.beginTransaction()) {
+                    StatementResult result = tx.run("MATCH (m:Movie {movieId: $movieId}) RETURN m",
+                            parameters("movieId", movieId));
+                    if (result.hasNext()) {
+                        String response = "The movie already exists!";
+                        Utils.sendString(request, response, 400);
+                        tx.failure(); // Rollback the transaction since the movie already exists
+                        return;
+                    }
+                }
+
+                //Movie with the given movieId doesn't exist
+                try (Transaction tx = session.beginTransaction()) {
+                    tx.run("CREATE (m:Movie {movieId: $movieId, name: $name })",
+                            parameters("movieId", movieId, "name", name));
+                    tx.success(); // Commit the transaction
+                }
+
+                String response = "Successfully added movie with id: " + movieId + " and name: " + name;
+                Utils.sendString(request, response, 200);
+            }
+        }
     }
+
 
     public void addRelationship(HttpExchange request) {
 
