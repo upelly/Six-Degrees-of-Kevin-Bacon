@@ -22,93 +22,189 @@ public class Neo4jMovies {
     }
 
     public void addActor(HttpExchange request) throws IOException, JSONException {
+        try{
+            // Extract and parse JSON data from request body
+            String requestBody = Utils.getBody(request);
+            JSONObject jsonObject = new JSONObject(requestBody);
 
-        // Extract and parse JSON data from request body
-        String requestBody = Utils.getBody(request);
-        JSONObject jsonObject = new JSONObject(requestBody);
+            String actorId = jsonObject.optString("actorId", null);
+            String name = jsonObject.optString("name", null);
+            boolean hasOscar = jsonObject.optBoolean("hasOscar");
 
-        String actorId = jsonObject.optString("actorId", null);
-        String name = jsonObject.optString("name", null);
-        boolean hasOscar = jsonObject.optBoolean("hasOscar");
+            //if improper formatting
+            if (actorId == null || name == null){
+                String response = "Improper formatting. Actor was not added.";
+                Utils.sendString(request, response, 400);
+            }
 
-        //if improper formatting
-        if (actorId == null || name == null){
-            String response = "Improper formatting. Actor was not added.";
-            Utils.sendString(request, response, 400);
+            else {
+                try (Session session = driver.session()) {
+                    //Check if the actorId already exists
+                    try (Transaction tx = session.beginTransaction()) {
+                        StatementResult result = tx.run("MATCH (a:Actor {actorId: $actorId}) RETURN a",
+                                parameters("actorId", actorId));
+                        if (result.hasNext()) {
+                            String response = "The actor already exists!";
+                            Utils.sendString(request, response, 400);
+                            tx.failure(); // Rollback the transaction since the actor already exists
+                            return;
+                        }
+                    }
+
+                    //Actor with the given actorId doesn't exist
+                    try (Transaction tx = session.beginTransaction()) {
+                        tx.run("CREATE (a:Actor {actorId: $actorId, name: $name, hasOscar: $hasOscar, movies: []})",
+                                parameters("actorId", actorId, "name", name, "hasOscar", hasOscar));
+                        tx.success(); // Commit the transaction
+                    }
+
+                    String response = "Successfully added actor with id: " + actorId + " and name: " + name;
+                    Utils.sendString(request, response, 200);
+                }
+            }
         }
 
-        else {
-            try (Session session = driver.session()) {
-                //Check if the actorId already exists
-                try (Transaction tx = session.beginTransaction()) {
-                    StatementResult result = tx.run("MATCH (a:Actor {actorId: $actorId}) RETURN a",
-                            parameters("actorId", actorId));
-                    if (result.hasNext()) {
-                        String response = "The actor already exists!";
-                        Utils.sendString(request, response, 400);
-                        tx.failure(); // Rollback the transaction since the actor already exists
-                        return;
-                    }
-                }
-
-                //Actor with the given actorId doesn't exist
-                try (Transaction tx = session.beginTransaction()) {
-                    tx.run("CREATE (a:Actor {actorId: $actorId, name: $name, hasOscar: $hasOscar, movies: []})",
-                            parameters("actorId", actorId, "name", name, "hasOscar", hasOscar));
-                    tx.success(); // Commit the transaction
-                }
-
-                String response = "Successfully added actor with id: " + actorId + " and name: " + name;
-                Utils.sendString(request, response, 200);
-            }
+        //If there is some exception thrown, send 500 response
+        catch(Exception e){
+            String response = "Internal Server Error: " + e.getMessage();
+            Utils.sendString(request, response, 500);
         }
 
     }
 
     public void addMovie(HttpExchange request) throws IOException, JSONException {
-        // Extract and parse JSON data from request body
-        String requestBody = Utils.getBody(request);
-        JSONObject jsonObject = new JSONObject(requestBody);
+        try{
+            // Extract and parse JSON data from request body
+            String requestBody = Utils.getBody(request);
+            JSONObject jsonObject = new JSONObject(requestBody);
 
-        String movieId = jsonObject.optString("movieId", null);
-        String name = jsonObject.optString("name", null);
+            String movieId = jsonObject.optString("movieId", null);
+            String name = jsonObject.optString("name", null);
 
-        //if improper formatting
-        if (movieId == null || name == null){
-            String response = "Improper formatting. Movie was not added.";
-            Utils.sendString(request, response, 400);
+            //if improper formatting
+            if (movieId == null || name == null){
+                String response = "Improper formatting. Movie was not added.";
+                Utils.sendString(request, response, 400);
+            }
+
+            else {
+                try (Session session = driver.session()) {
+                    //Check if the movieId already exists
+                    try (Transaction tx = session.beginTransaction()) {
+                        StatementResult result = tx.run("MATCH (m:Movie {movieId: $movieId}) RETURN m",
+                                parameters("movieId", movieId));
+                        if (result.hasNext()) {
+                            String response = "The movie already exists!";
+                            Utils.sendString(request, response, 400);
+                            tx.failure(); // Rollback the transaction since the movie already exists
+                            return;
+                        }
+                    }
+
+                    //Movie with the given movieId doesn't exist
+                    try (Transaction tx = session.beginTransaction()) {
+                        tx.run("CREATE (m:Movie {movieId: $movieId, name: $name, actors: [] })",
+                                parameters("movieId", movieId, "name", name));
+                        tx.success(); // Commit the transaction
+                    }
+
+                    String response = "Successfully added movie with id: " + movieId + " and name: " + name;
+                    Utils.sendString(request, response, 200);
+                }
+            }
         }
 
-        else {
-            try (Session session = driver.session()) {
-                //Check if the movieId already exists
-                try (Transaction tx = session.beginTransaction()) {
-                    StatementResult result = tx.run("MATCH (m:Movie {movieId: $movieId}) RETURN m",
-                            parameters("movieId", movieId));
-                    if (result.hasNext()) {
-                        String response = "The movie already exists!";
-                        Utils.sendString(request, response, 400);
-                        tx.failure(); // Rollback the transaction since the movie already exists
-                        return;
-                    }
-                }
-
-                //Movie with the given movieId doesn't exist
-                try (Transaction tx = session.beginTransaction()) {
-                    tx.run("CREATE (m:Movie {movieId: $movieId, name: $name, actors: [] })",
-                            parameters("movieId", movieId, "name", name));
-                    tx.success(); // Commit the transaction
-                }
-
-                String response = "Successfully added movie with id: " + movieId + " and name: " + name;
-                Utils.sendString(request, response, 200);
-            }
+        //If there is some exception thrown, send 500 response
+        catch(Exception e){
+            String response = "Internal Server Error: " + e.getMessage();
+            Utils.sendString(request, response, 500);
         }
     }
 
 
-    public void addRelationship(HttpExchange request) {
+    public void addRelationship(HttpExchange request) throws IOException, JSONException {
+        try{
+            // Extract and parse JSON data from request body
+            String requestBody = Utils.getBody(request);
+            JSONObject jsonObject = new JSONObject(requestBody);
 
+            String actorId = jsonObject.optString("actorId", null);
+            String movieId = jsonObject.optString("movieId", null);
+
+            //if improper formatting
+            if (actorId == null || movieId == null){
+                String response = "Improper formatting. Relationship was not added.";
+                Utils.sendString(request, response, 400);
+            }
+
+            else {
+                try (Session session = driver.session()) {
+                    // Check if both the actor and movie exist
+                    try (Transaction tx = session.beginTransaction()) {
+                        StatementResult actorResult = tx.run("MATCH (a:Actor {actorId: $actorId}) RETURN a",
+                                parameters("actorId", actorId));
+                        StatementResult movieResult = tx.run("MATCH (m:Movie {movieId: $movieId}) RETURN m",
+                                parameters("movieId", movieId));
+
+                        if (!actorResult.hasNext()) {
+                            String response = "The actor with ID " + actorId + " does not exist!";
+                            Utils.sendString(request, response, 404);
+                            tx.failure(); // Rollback the transaction since the actor doesn't exist
+                            return;
+                        }
+
+                        if (!movieResult.hasNext()) {
+                            String response = "The movie with ID " + movieId + " does not exist!";
+                            Utils.sendString(request, response, 404);
+                            tx.failure(); // Rollback the transaction since the movie doesn't exist
+                            return;
+                        }
+
+                        //check if relationship exists
+                        StatementResult result = tx.run(
+                                "MATCH (a:Actor {actorId: $actorId})-[r:ACTED_IN]->(m:Movie {movieId: $movieId}) RETURN r",
+                                parameters("actorId", actorId, "movieId", movieId)
+                        );
+
+                        if (result.hasNext()) {
+                            String response = "The ACTED_IN relationship already exists between actor with ID " + actorId +
+                                    " and movie with ID " + movieId;
+                            Utils.sendString(request, response, 400);
+                            return;
+                        }
+                    }
+
+                    //when both actor and movie ids exist, do this
+                    try (Transaction tx = session.beginTransaction()) {
+                        //Create relationship
+                        tx.run("MATCH (a:Actor {actorId: $actorId}), (m:Movie {movieId: $movieId})\n" +
+                                        "CREATE (a)-[:ACTED_IN]->(m)",
+                                parameters("actorId", actorId, "movieId", movieId));
+
+                        // Update the actors and movies list properties
+                        tx.run("MATCH (m:Movie {movieId: $movieId})\n" +
+                                        "SET m.actors = m.actors + $actorId",
+                                parameters("actorId", actorId, "movieId", movieId));
+
+                        tx.run("MATCH (a:Actor {actorId: $actorId}) " +
+                                        "SET a.movies = a.movies + $movieId",
+                                parameters("actorId", actorId, "movieId", movieId));
+
+                        tx.success();
+                    }
+
+                    String response = "Successfully created ACTED_IN relationship between actor with ID " + actorId
+                            + " and movie with ID " + movieId;
+                    Utils.sendString(request, response, 200);
+                }
+            }
+        }
+
+        //If there is some exception thrown, send 500 response
+        catch(Exception e){
+            String response = "Internal Server Error: " + e.getMessage();
+            Utils.sendString(request, response, 500);
+        }
     }
 
     public void getActor(HttpExchange request){

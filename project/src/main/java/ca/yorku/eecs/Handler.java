@@ -25,7 +25,6 @@ public class Handler implements HttpHandler{
             }
             else if (path.contains("addRelationship")) {
                 nm.addRelationship(request);
-                System.out.println("We have added the relationship");
             }
             else if (path.contains("getActor")) {
                 nm.getActor(request);
