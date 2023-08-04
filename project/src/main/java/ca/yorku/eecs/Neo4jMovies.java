@@ -53,7 +53,7 @@ public class Neo4jMovies {
 
                 //Actor with the given actorId doesn't exist
                 try (Transaction tx = session.beginTransaction()) {
-                    tx.run("CREATE (a:Actor {actorId: $actorId, name: $name, hasOscar: $hasOscar})",
+                    tx.run("CREATE (a:Actor {actorId: $actorId, name: $name, hasOscar: $hasOscar, movies: []})",
                             parameters("actorId", actorId, "name", name, "hasOscar", hasOscar));
                     tx.success(); // Commit the transaction
                 }
@@ -95,7 +95,7 @@ public class Neo4jMovies {
 
                 //Movie with the given movieId doesn't exist
                 try (Transaction tx = session.beginTransaction()) {
-                    tx.run("CREATE (m:Movie {movieId: $movieId, name: $name })",
+                    tx.run("CREATE (m:Movie {movieId: $movieId, name: $name, actors: [] })",
                             parameters("movieId", movieId, "name", name));
                     tx.success(); // Commit the transaction
                 }
