@@ -19,11 +19,9 @@ public class Handler implements HttpHandler{
             String path = uri.getPath();
             if (path.contains("addActor")) {
                 nm.addActor(request);
-                System.out.println("We have added the actor");
             }
             else if (path.contains("addMovie")) {
                 nm.addMovie(request);
-                System.out.println("We have added the movie");
             }
             else if (path.contains("addRelationship")) {
                 nm.addRelationship(request);
