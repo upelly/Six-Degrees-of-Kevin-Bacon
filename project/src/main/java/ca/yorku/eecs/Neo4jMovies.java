@@ -21,6 +21,23 @@ public class Neo4jMovies {
         driver = GraphDatabase.driver(uriDb, AuthTokens.basic("neo4j","12345678"), config);
     }
 
+    //Check if the actor already exists or not and return a boolean
+    public boolean actorExists (String actorId){
+        try (Session session = driver.session()) {
+            //Check if the actorId already exists
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult result = tx.run("MATCH (a:Actor {actorId: $actorId}) RETURN a",
+                        parameters("actorId", actorId));
+                if (result.hasNext()) {
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            }
+        }
+    }
+
     public void addActor(HttpExchange request) throws IOException, JSONException {
         try{
             // Extract and parse JSON data from request body
@@ -38,19 +55,13 @@ public class Neo4jMovies {
             }
 
             else {
-                try (Session session = driver.session()) {
-                    //Check if the actorId already exists
-                    try (Transaction tx = session.beginTransaction()) {
-                        StatementResult result = tx.run("MATCH (a:Actor {actorId: $actorId}) RETURN a",
-                                parameters("actorId", actorId));
-                        if (result.hasNext()) {
-                            String response = "The actor already exists!";
-                            Utils.sendString(request, response, 400);
-                            tx.failure(); // Rollback the transaction since the actor already exists
-                            return;
-                        }
-                    }
+                if (actorExists(actorId)){
+                    String response = "The actor already exists!";
+                    Utils.sendString(request, response, 400);
+                    return;
+                }
 
+                try (Session session = driver.session()) {
                     //Actor with the given actorId doesn't exist
                     try (Transaction tx = session.beginTransaction()) {
                         tx.run("CREATE (a:Actor {actorId: $actorId, name: $name, hasOscar: $hasOscar, movies: []})",
@@ -72,6 +83,23 @@ public class Neo4jMovies {
 
     }
 
+    //Check if the movie already exists or not and return a boolean
+    public boolean movieExists (String movieId){
+        try (Session session = driver.session()) {
+            //Check if the movieId already exists
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult result = tx.run("MATCH (m:Movie {movieId: $movieId}) RETURN m",
+                        parameters("movieId", movieId));
+                if (result.hasNext()) {
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            }
+        }
+    }
+
     public void addMovie(HttpExchange request) throws IOException, JSONException {
         try{
             // Extract and parse JSON data from request body
@@ -88,19 +116,13 @@ public class Neo4jMovies {
             }
 
             else {
-                try (Session session = driver.session()) {
-                    //Check if the movieId already exists
-                    try (Transaction tx = session.beginTransaction()) {
-                        StatementResult result = tx.run("MATCH (m:Movie {movieId: $movieId}) RETURN m",
-                                parameters("movieId", movieId));
-                        if (result.hasNext()) {
-                            String response = "The movie already exists!";
-                            Utils.sendString(request, response, 400);
-                            tx.failure(); // Rollback the transaction since the movie already exists
-                            return;
-                        }
-                    }
+                if (movieExists(movieId)){
+                    String response = "The movie already exists!";
+                    Utils.sendString(request, response, 400);
+                    return;
+                }
 
+                try (Session session = driver.session()) {
                     //Movie with the given movieId doesn't exist
                     try (Transaction tx = session.beginTransaction()) {
                         tx.run("CREATE (m:Movie {movieId: $movieId, name: $name, actors: [] })",
@@ -121,7 +143,6 @@ public class Neo4jMovies {
         }
     }
 
-
     public void addRelationship(HttpExchange request) throws IOException, JSONException {
         try{
             // Extract and parse JSON data from request body
@@ -138,28 +159,21 @@ public class Neo4jMovies {
             }
 
             else {
+                // Check if both the actor and movie exist
+                if (!actorExists(actorId)){
+                    String response = "The actor with ID " + actorId + " does not exist!";
+                    Utils.sendString(request, response, 404);
+                    return;
+                }
+
+                if (!movieExists(movieId)){
+                    String response = "The movie with ID " + movieId + " does not exist!";
+                    Utils.sendString(request, response, 404);
+                    return;
+                }
+
                 try (Session session = driver.session()) {
-                    // Check if both the actor and movie exist
                     try (Transaction tx = session.beginTransaction()) {
-                        StatementResult actorResult = tx.run("MATCH (a:Actor {actorId: $actorId}) RETURN a",
-                                parameters("actorId", actorId));
-                        StatementResult movieResult = tx.run("MATCH (m:Movie {movieId: $movieId}) RETURN m",
-                                parameters("movieId", movieId));
-
-                        if (!actorResult.hasNext()) {
-                            String response = "The actor with ID " + actorId + " does not exist!";
-                            Utils.sendString(request, response, 404);
-                            tx.failure(); // Rollback the transaction since the actor doesn't exist
-                            return;
-                        }
-
-                        if (!movieResult.hasNext()) {
-                            String response = "The movie with ID " + movieId + " does not exist!";
-                            Utils.sendString(request, response, 404);
-                            tx.failure(); // Rollback the transaction since the movie doesn't exist
-                            return;
-                        }
-
                         //check if relationship exists
                         StatementResult result = tx.run(
                                 "MATCH (a:Actor {actorId: $actorId})-[r:ACTED_IN]->(m:Movie {movieId: $movieId}) RETURN r",
