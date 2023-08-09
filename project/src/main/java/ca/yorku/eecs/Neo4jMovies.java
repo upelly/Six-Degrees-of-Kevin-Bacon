@@ -227,12 +227,104 @@ public class Neo4jMovies {
         }
     }
 
-    public void getActor(HttpExchange request){
+    public void getActor(HttpExchange request) throws IOException {
+        try {
+            //Extract and parse JSON data from request body
+            String query = request.getRequestURI().getQuery();
+            Map<String, String> queryMap = Utils.splitQuery(query);
 
+            String actorId = queryMap.get("actorId");
+
+            //if improper formatting
+            if (actorId == null){
+                String response = "Improper formatting. Actor was not added.";
+                Utils.sendString(request, response, 400);
+            }
+
+
+            if (!actorExists(actorId)){
+                String response = "The actor with ID " + actorId + " does not exist!";
+                Utils.sendString(request, response, 404);
+                return;
+            }
+
+            try (Session session = driver.session()) {
+                try (Transaction tx = session.beginTransaction()) {
+                    // Retrieve actor details with the given actorId
+                    StatementResult result = tx.run("MATCH (a:Actor {actorId: $actorId}) RETURN a",
+                            parameters("actorId", actorId));
+
+                    if (result.hasNext()) {
+                        // Get the actor node as a Map and create a JSON object
+                        Map<String, Object> actorNode = result.next().get("a").asMap();
+                        JSONObject actorJson = new JSONObject(actorNode);
+
+                        // Send the JSON object as the response
+                        Utils.sendString(request, actorJson.toString(4), 200);
+                    }
+                }
+            }
+        }
+        //If there is some exception thrown, send 500 response
+        catch(Exception e){
+            String response = "Internal Server Error: " + e.getMessage();
+            Utils.sendString(request, response, 500);
+        }
     }
 
-    public void getMovie(HttpExchange request){
+    public void getMovie(HttpExchange request) throws IOException {
+        try {
 
+            //Extract and parse JSON data from request body
+            String query = request.getRequestURI().getQuery();
+            Map<String, String> queryMap = Utils.splitQuery(query);
+
+            String movieId = queryMap.get("movieId");
+
+            //if improper formatting
+            if (movieId == null){
+                String response = "Improper formatting. Movie was not added.";
+                Utils.sendString(request, response, 400);
+            }
+
+
+
+
+            // If improper formatting
+            if (movieId == null) {
+                String response = "Improper formatting. Movie was not added.";
+                Utils.sendString(request, response, 400);
+                return;
+            }
+
+            if (!movieExists(movieId)) {
+                String response = "The movie with ID " + movieId + " does not exist!";
+                Utils.sendString(request, response, 404);
+                return;
+            }
+
+            try (Session session = driver.session()) {
+                try (Transaction tx = session.beginTransaction()) {
+                    // Retrieve movie details with the given movieId
+                    StatementResult result = tx.run("MATCH (m:Movie {movieId: $movieId}) RETURN m",
+                            parameters("movieId", movieId));
+
+                    if (result.hasNext()) {
+                        // Get the movie node as a Map and create a JSON object
+                        Map<String, Object> movieNode = result.next().get("m").asMap();
+                        JSONObject movieJson = new JSONObject(movieNode);
+
+                        // Send the JSON object as the response
+                        Utils.sendString(request, movieJson.toString(4), 200);
+                    }
+                }
+            }
+        }
+        // If there is some exception thrown, send a 500 response
+        catch (Exception e) {
+            String response = "Internal Server Error: " + e.getMessage();
+            Utils.sendString(request, response, 500);
+        }
     }
 
     public void hasRelationship(HttpExchange request) throws IOException, JSONException{
