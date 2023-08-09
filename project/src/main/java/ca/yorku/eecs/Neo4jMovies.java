@@ -235,8 +235,60 @@ public class Neo4jMovies {
 
     }
 
-    public void hasRelationship(HttpExchange request){
+    public void hasRelationship(HttpExchange request) throws IOException, JSONException{
+        try{
+            // Extract and parse JSON data from URI
+            String query = request.getRequestURI().getQuery();
+            Map<String, String> queryMap = Utils.splitQuery(query);
 
+            String actorId = queryMap.get("actorId");
+            String movieId = queryMap.get("movieId");
+
+            //if improper formatting
+            if (actorId == null || movieId == null){
+                String response = "Improper formatting. Could not start looking for relationship.";
+                Utils.sendString(request, response, 400);
+            }
+
+            else {
+                // Check if both the actor and movie exist
+                if (!actorExists(actorId)) {
+                    String response = "The actor with ID " + actorId + " does not exist!";
+                    Utils.sendString(request, response, 404);
+                    return;
+                }
+
+                if (!movieExists(movieId)) {
+                    String response = "The movie with ID " + movieId + " does not exist!";
+                    Utils.sendString(request, response, 404);
+                    return;
+                }
+
+                try (Session session = driver.session()) {
+                    try (Transaction tx = session.beginTransaction()) {
+                        //check if relationship exists
+                        StatementResult result = tx.run(
+                                "MATCH (a:Actor {actorId: $actorId})-[r:ACTED_IN]->(m:Movie {movieId: $movieId}) RETURN r",
+                                parameters("actorId", actorId, "movieId", movieId)
+                        );
+
+                        JSONObject response = new JSONObject();
+                        response.put("actorId", actorId);
+                        response.put("movieId", movieId);
+                        response.put("hasRelationship", result.hasNext());
+                        Utils.sendString(request, response.toString(4), 200);
+                        return;
+                    }
+                }
+            }
+
+        }
+
+        //If there is some exception thrown, send 500 response
+        catch(Exception e){
+            String response = "Internal Server Error: " + e.getMessage();
+            Utils.sendString(request, response, 500);
+        }
     }
 
     public void getOscarActor(HttpExchange request) throws IOException, JSONException {
