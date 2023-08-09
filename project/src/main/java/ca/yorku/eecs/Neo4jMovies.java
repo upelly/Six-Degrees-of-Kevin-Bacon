@@ -3,12 +3,18 @@ package ca.yorku.eecs;
 import static org.neo4j.driver.v1.Values.parameters;
 
 import com.sun.net.httpserver.HttpExchange;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.neo4j.driver.v1.*;
+import org.neo4j.driver.v1.types.Node;
 
 import java.io.IOException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Neo4jMovies {
 
@@ -233,9 +239,53 @@ public class Neo4jMovies {
 
     }
 
+    public void getOscarActor(HttpExchange request) throws IOException, JSONException {
+
+        try (Session session = driver.session()) {
+            try (Transaction tx = session.beginTransaction()) {
+                StatementResult result = tx.run("MATCH (a:Actor {hasOscar: true}) RETURN a");
+                JSONArray jsonArray = new JSONArray(); // Array to hold actor objects
+
+                while (result.hasNext()) {
+                    Record record = result.next();
+                    Node actorNode = record.get("a").asNode();
+                    JSONObject actorJson = new JSONObject();
+
+                    // Extract attributes from the actor node and add them to the JSON object
+                    actorJson.put("name", actorNode.get("name").asString());
+                    actorJson.put("hasOscar", actorNode.get("hasOscar").asBoolean());
+                    // Add more attributes as needed
+
+                    jsonArray.put(actorJson); // Add the JSON object to the array
+                }
+
+                JSONObject responseJson = new JSONObject();
+                responseJson.put("actors", jsonArray); // Add the array to the response JSON
+
+                String response = responseJson.toString(4);
+                System.out.println(response);
+                Utils.sendString(request, response, 200);
+            }
+        }
+    }
+
     //We can compute the path in this helper and then use the list to determine
     //the bacon number as well
-    public List<String> computeBaconHelper(HttpExchange request){
+    public List<String> computeBaconHelper(HttpExchange request) throws IOException, JSONException {
+
+        // Extract and parse JSON data from request body
+        String requestBody = Utils.getBody(request);
+        JSONObject jsonObject = new JSONObject(requestBody);
+
+        String actorId = jsonObject.optString("actorId", null);
+        String movieId = jsonObject.optString("movieId", null);
+
+        // Check if the actorId exists
+        if (!actorExists(actorId)) {
+            String response = "The actor with ID " + actorId + " does not exist!";
+            Utils.sendString(request, response, 404);
+            return null;
+        }
         return null;
     }
 
