@@ -11,10 +11,7 @@ import org.neo4j.driver.v1.types.Node;
 
 import java.io.IOException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Neo4jMovies {
 
@@ -422,7 +419,6 @@ public class Neo4jMovies {
         JSONObject jsonObject = new JSONObject(requestBody);
 
         String actorId = jsonObject.optString("actorId", null);
-        String movieId = jsonObject.optString("movieId", null);
 
         // Check if the actorId exists
         if (!actorExists(actorId)) {
@@ -430,6 +426,55 @@ public class Neo4jMovies {
             Utils.sendString(request, response, 404);
             return null;
         }
+
+        Graph graph = new Graph();
+        List<Record> actors = new ArrayList<Record>();
+        List<Record> movies = new ArrayList<Record>();
+
+        try (Session session = driver.session()) {
+            try (Transaction tx = session.beginTransaction()) {
+                //add actors to the graph
+                StatementResult result = tx.run(
+                        "MATCH (a:Actor) RETURN a"
+                );
+                while(result.hasNext()){
+                    Record temp = result.next();
+                    graph.addVertex(temp.get("a").asNode().get("actorId").asString());
+                    actors.add(temp);
+                }
+
+                //add movies to the graph
+                StatementResult result2 = tx.run(
+                        "MATCH (m:Movie) RETURN m"
+                );
+                while(result2.hasNext()){
+                    Record temp = result2.next();
+                    graph.addVertex(temp.get("m").asNode().get("movieId").asString());
+                    movies.add(temp);
+                }
+
+                for(int i=0; i<actors.size(); i++){
+                    for(int j=0; j<movies.size(); j++){
+                        Node actorNode = actors.get(i).get("a").asNode();
+                        Node movieNode = movies.get(j).get("m").asNode();
+                        StatementResult result3 = tx.run(
+                                "MATCH (a:Actor {actorId: $actorId})-[r:ACTED_IN]->(m:Movie {movieId: $movieId}) RETURN r",
+                                parameters("actorId", actorNode.get("actorId").asString(), "movieId", movieNode.get("movieId").asString())
+                        );
+                        if(result3.hasNext()){
+                            graph.addEdge(actorNode.get("actorId").asString(), movieNode.get("movieId").asString());
+                            //System.out.println("vertex added between " + actorNode.get("name").asString() + " and " + movieNode.get("name").asString());
+                        }
+                    }
+                }
+
+                List<String> shortestPath = graph.findShortestPath(actorId, "nm0000102");
+                shortestPath.forEach(System.out::println);
+                //To do: send this back in response in computeBaconNumber and in computeBaconPath
+
+            }
+        }
+
         return null;
     }
 
@@ -437,8 +482,8 @@ public class Neo4jMovies {
 
     }
 
-    public void computeBaconPath(HttpExchange request){
-        // comment test
+    public void computeBaconPath(HttpExchange request) throws IOException, JSONException{
+        computeBaconHelper(request);
     }
 
     public void close() {
