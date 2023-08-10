@@ -420,6 +420,8 @@ public class Neo4jMovies {
 
         String actorId = jsonObject.optString("actorId", null);
 
+        List<String> shortestPath = null;
+
         // Check if the actorId exists
         if (!actorExists(actorId)) {
             String response = "The actor with ID " + actorId + " does not exist!";
@@ -468,14 +470,14 @@ public class Neo4jMovies {
                     }
                 }
 
-                List<String> shortestPath = graph.findShortestPath(actorId, "nm0000102");
+                shortestPath = graph.findShortestPath(actorId, "nm0000102");
                 shortestPath.forEach(System.out::println);
                 //To do: send this back in response in computeBaconNumber and in computeBaconPath
 
             }
         }
 
-        return null;
+        return shortestPath;
     }
 
     public void computeBaconNumber(HttpExchange request){
