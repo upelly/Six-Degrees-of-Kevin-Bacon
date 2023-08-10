@@ -16,4 +16,8 @@ public class TreeNode<T>{
     public TreeNode<T> getParent(){
         return this.parent;
     }
+
+    public T getData(){
+        return data;
+    }
 }

@@ -427,7 +427,7 @@ public class Neo4jMovies {
             return null;
         }
 
-        Graph<String> graph = new Graph<String>();
+        Graph graph = new Graph();
         List<Record> actors = new ArrayList<Record>();
         List<Record> movies = new ArrayList<Record>();
 
@@ -468,7 +468,9 @@ public class Neo4jMovies {
                     }
                 }
 
-
+                List<String> shortestPath = graph.findShortestPath(actorId, "nm0000102");
+                shortestPath.forEach(System.out::println);
+                //To do: send this back in response in computeBaconNumber and in computeBaconPath
 
             }
         }

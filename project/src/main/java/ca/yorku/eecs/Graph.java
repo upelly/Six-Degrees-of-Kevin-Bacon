@@ -2,36 +2,42 @@ package ca.yorku.eecs;
 
 import java.util.*;
 
-public class Graph<T> {
+public class Graph {
 
-    private Map<T, Set<T>> graph;
-    private Map<T, Boolean> visited;
+    private Map<String, Set<String>> graph;
+    private Map<String, Boolean> visited;
+    private List<String> edgesA;
+    private List<String> edgesB;
 
     public Graph(){
         this.graph = new HashMap<>();
         this.visited = new HashMap<>();
+        edgesA = new ArrayList<>();
+        edgesB = new ArrayList<>();
     }
 
-    public void addVertex(T vertex) {
-        this.graph.put(vertex, (Set<T>) new HashSet<T>());
+    public void addVertex(String vertex) {
+        this.graph.put(vertex, new HashSet<>());
         this.visited.put(vertex, false);
     }
 
-    public List<T> getAdjacent(T vertex) {
+    public List<String> getAdjacent(String vertex) {
         return new ArrayList<>(graph.get(vertex));
     }
 
-    public void addEdge(T fromVertex, T toVertex) {
+    public void addEdge(String fromVertex, String toVertex) {
         this.graph.get(fromVertex).add(toVertex);
         this.graph.get(toVertex).add(fromVertex);
+        edgesA.add(fromVertex);
+        edgesB.add(toVertex);
     }
 
-    public void setVisited(T vertex) {
+    public void setVisited(String vertex) {
         this.visited.replace(vertex, true);
     }
 
-    public List<T> getVisited() {
-        List<T> list = new ArrayList<T>();
+    public List<String> getVisited() {
+        List<String> list = new ArrayList<String>();
         this.visited.forEach((k, v) -> {
             if(v) {
                 list.add(k);
@@ -44,28 +50,45 @@ public class Graph<T> {
         this.visited.forEach((k, v) -> v=false);
     }
 
-    public List<T> findShortestPath(T start, T end){
-        Queue<T> Q = new LinkedList<T>();
-        this.reset();
+    private TreeNodeGraph nodeCopy(){
+        TreeNodeGraph copy = new TreeNodeGraph();
+        this.graph.forEach((k, v) -> copy.addVertex(new TreeNode<String>(k)));
+        //copy edges over as well
+        for(int i=0; i<edgesA.size(); i++){
+            copy.addEdge(copy.findNode(edgesA.get(i)), copy.findNode(edgesB.get(i)));
+        }
+        return copy;
+    }
+
+    public List<String> findShortestPath(String start, String end){
+        TreeNodeGraph copyGraph = nodeCopy();
+        Queue<TreeNode<String>> Q = new LinkedList<>();
         this.setVisited(start);
-        Q.add(start);
-        TreeNode<T> root = new TreeNode<T>(start);
-        TreeNode<T> currentNode = root;
-        while(Q.size()>0){
-            T v = Q.remove();
-            if(v.equals(end)){
-                //return v - need to return the whole list
+        Q.add(copyGraph.findNode(start));
+        List<String> returnlist = new ArrayList<>();
+
+        while(!Q.isEmpty()){
+            TreeNode<String> v = Q.remove();
+            if(v.equals(copyGraph.findNode(end))){
+                //return v - need to return the whole list leading to the shortest path
+                returnlist.add(v.getData());
+                while(v.getParent()!=null){
+                    v=v.getParent();
+                    returnlist.add(v.getData());
+                }
             }
             else{
-                List<T> adjacent = this.getAdjacent(v);
-                for(int i=0; i< adjacent.size(); i++){
-                    if(!this.getVisited().contains(adjacent.get(i))){
-                        setVisited(adjacent.get(i));
-                        Q.add(adjacent.get(i));
+                List<String> adjacent = this.getAdjacent(v.getData());
+                for(String t: adjacent){
+                    if(!this.getVisited().contains(t)){
+                        setVisited(t);
+                        copyGraph.findNode(t).setParent(v);
+                        Q.add(copyGraph.findNode(t));
                     }
                 }
             }
         }
-        return null;
+
+        return returnlist;
     }
 }
