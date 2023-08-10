@@ -76,6 +76,7 @@ public class Graph {
                     v=v.getParent();
                     returnlist.add(v.getData());
                 }
+                return returnlist;
             }
             else{
                 List<String> adjacent = this.getAdjacent(v.getData());
