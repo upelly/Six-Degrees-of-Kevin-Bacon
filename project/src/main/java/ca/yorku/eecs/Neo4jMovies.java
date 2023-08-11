@@ -414,11 +414,11 @@ public class Neo4jMovies {
     //the bacon number as well
     public List<String> computeBaconHelper(HttpExchange request) throws IOException, JSONException {
 
-        // Extract and parse JSON data from request body
-        String requestBody = Utils.getBody(request);
-        JSONObject jsonObject = new JSONObject(requestBody);
+        // Extract and parse JSON data from URI
+        String query = request.getRequestURI().getQuery();
+        Map<String, String> queryMap = Utils.splitQuery(query);
 
-        String actorId = jsonObject.optString("actorId", null);
+        String actorId = queryMap.get("actorId");
 
         List<String> shortestPath = null;
 

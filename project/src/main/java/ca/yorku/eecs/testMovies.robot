@@ -41,7 +41,7 @@ addRelationshipFail
 #----------------------------Actors Setups----------------------------
 actorsSetup1
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    name=Kevin Spacey    actorId=nm0000103
+    ${params}=    Create Dictionary    name=Kevin Spacey    actorId=nm0000103   hasOscar=true
     ${resp}=    PUT On Session    localhost    /api/v1/addActor    json=${params}    headers=${headers}    expected_status=200
 
 actorsSetup2
@@ -56,12 +56,12 @@ actorsSetup3
 
 actorsSetup4
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    name=Tom Cruise    actorId=nm0000106
+    ${params}=    Create Dictionary    name=Tom Cruise    actorId=nm0000106    hasOscar=true
     ${resp}=    PUT On Session    localhost    /api/v1/addActor    json=${params}    headers=${headers}    expected_status=200
 
 actorsSetup5
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    name=Keanu Reeves    actorId=nm0000107
+    ${params}=    Create Dictionary    name=Keanu Reeves    actorId=nm0000107    hasOscar=true
     ${resp}=    PUT On Session    localhost    /api/v1/addActor    json=${params}    headers=${headers}    expected_status=200
 
 actorsSetup6
@@ -86,7 +86,7 @@ actorsSetup9
 
 actorsSetup10
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    name=Christian Bale    actorId=nm0000112
+    ${params}=    Create Dictionary    name=Christian Bale    actorId=nm0000112    hasOscar=true
     ${resp}=    PUT On Session    localhost    /api/v1/addActor    json=${params}    headers=${headers}    expected_status=200
 
 #----------------------------Movies Setups----------------------------
@@ -122,40 +122,40 @@ relationshipsSetup1
     ${params}=    Create Dictionary    actorId=nm0000106    movieId=nm7000001
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
-#Tom Cruise to Mission Impossible
+#Christian Bale to A Few Good Men
 relationshipsSetup2
+    ${headers}=    Create Dictionary    Content-Type=application/json
+    ${params}=    Create Dictionary    actorId=nm0000112    movieId=nm7000001
+    ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
+
+#Tom Cruise to Mission Impossible
+relationshipsSetup3
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    actorId=nm0000106    movieId=nm7000005
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
 #Tom Holland to Mission Impossible
-relationshipsSetup3
+relationshipsSetup4
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    actorId=nm0000104    movieId=nm7000005
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
-#Keanu Reeves to Mission Impossible
-relationshipsSetup4
+#RDJ to Hunger Games
+relationshipsSetup5
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    actorId=nm0000107    movieId=nm7000005
+    ${params}=    Create Dictionary    actorId=nm0000105    movieId=nm7000003
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
 #Jennifer Lawrence to Hunger Games
-relationshipsSetup5
+relationshipsSetup6
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    actorId=nm0000109    movieId=nm7000003
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
 #Liam Hemsworth to Hunger Games
-relationshipsSetup6
-    ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    actorId=nm0000110    movieId=nm7000003
-    ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
-
-#RDJ to Hunger Games
 relationshipsSetup7
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    actorId=nm0000105    movieId=nm7000003
+    ${params}=    Create Dictionary    actorId=nm0000110    movieId=nm7000003
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
 #Chris Hemsworth to Thor: Love and Thunder
@@ -201,13 +201,37 @@ relationshipsSetup14
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
 #Jennifer Lawrence to John Wick
-relationshipsSetup14
+relationshipsSetup15
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    actorId=nm0000109    movieId=nm7000002
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
 #Kevin Bacon to John Wick
-relationshipsSetup14
+relationshipsSetup16
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    actorId=nm0000102    movieId=nm7000002
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
+
+#----------------------------GET Test Cases----------------------------
+#Someone else please do other tests (delete this comment when finished)
+
+#Bacon tests (delete this comment when finished other tests)
+#Bacon Number from Liam Hemsworth
+computeBaconNumberPass
+    ${resp}=    Get Request    localhost    /api/v1/computeBaconNumber?actorId=nm0000110    expected_status=200
+    ${bacon_number}=    Set Variable    ${resp.json()["baconNumber"]}
+    Should Be Equal As Integers    ${bacon_number}    2
+
+#Kevin Spacey is not connected to anything so he should fail
+computeBaconNumberFail
+    ${resp}=    Get Request    localhost    /api/v1/computeBaconNumber?actorId=nm0000103    expected_status=404
+
+#Bacon Path from Liam Hemsworth
+computeBaconPathPass
+    ${resp}=    Get Request    localhost    /api/v1/computeBaconPath?actorId=nm0000110    expected_status=200
+    ${bacon_path}=    Set Variable    ${resp.json()["baconPath"]}
+    Should Contain Exactly In Order    ${bacon_path}    nm0000110    nm7000003    nm0000109    nm7000002    nm0000102
+
+#Bacon Path from Kevin Spacey
+computeBaconPathPass
+    ${resp}=    Get Request    localhost    /api/v1/computeBaconPath?actorId=nm0000103    expected_status=404
