@@ -278,15 +278,6 @@ public class Neo4jMovies {
 
             String movieId = queryMap.get("movieId");
 
-            //if improper formatting
-            if (movieId == null){
-                String response = "Improper formatting. Movie was not added.";
-                Utils.sendString(request, response, 400);
-            }
-
-
-
-
             // If improper formatting
             if (movieId == null) {
                 String response = "Improper formatting. Movie was not added.";
@@ -471,6 +462,7 @@ public class Neo4jMovies {
                 }
 
                 shortestPath = graph.findShortestPath(actorId, "nm0000102");
+                Collections.reverse(shortestPath);
                 shortestPath.forEach(System.out::println);
                 //To do: send this back in response in computeBaconNumber and in computeBaconPath
 
@@ -480,12 +472,36 @@ public class Neo4jMovies {
         return shortestPath;
     }
 
-    public void computeBaconNumber(HttpExchange request){
+    public void computeBaconNumber(HttpExchange request) {
 
     }
 
-    public void computeBaconPath(HttpExchange request) throws IOException, JSONException{
-        computeBaconHelper(request);
+    public void computeBaconPath(HttpExchange request) throws IOException {
+        try{
+            List<String> result = computeBaconHelper(request);
+
+            System.out.println("this is the list: " + result.toString());
+
+            if (result.equals(new ArrayList<>())){
+                Utils.sendString(request, "There is no path", 404);
+                return;
+            }
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("baconPath", result);
+                String response = obj.toString();
+                Utils.sendString(request, response, 200);
+            }
+            catch (JSONException e) {
+                String response = "Internal Server Error: " + e.getMessage();
+                Utils.sendString(request, response, 500);
+            }
+        }
+        catch (Exception e){
+            String response = "Internal Server Error: " + e.getMessage();
+            Utils.sendString(request, response, 500);
+        }
+
     }
 
     public void close() {

@@ -218,20 +218,24 @@ relationshipsSetup16
 #Bacon tests (delete this comment when finished other tests)
 #Bacon Number from Liam Hemsworth
 computeBaconNumberPass
-    ${resp}=    Get Request    localhost    /api/v1/computeBaconNumber?actorId=nm0000110    expected_status=200
-    ${bacon_number}=    Set Variable    ${resp.json()["baconNumber"]}
+    ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconNumber?actorId=nm0000110    expected_status=200
+    ${bacon_number}=    Evaluate    json.loads('''${resp.content}''')    json
     Should Be Equal As Integers    ${bacon_number}    2
 
 #Kevin Spacey is not connected to anything so he should fail
 computeBaconNumberFail
-    ${resp}=    Get Request    localhost    /api/v1/computeBaconNumber?actorId=nm0000103    expected_status=404
+    ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconNumber?actorId=nm0000103    expected_status=400
 
 #Bacon Path from Liam Hemsworth
 computeBaconPathPass
-    ${resp}=    Get Request    localhost    /api/v1/computeBaconPath?actorId=nm0000110    expected_status=200
+    ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconPath?actorId=nm0000110    expected_status=200
     ${bacon_path}=    Set Variable    ${resp.json()["baconPath"]}
-    Should Contain Exactly In Order    ${bacon_path}    nm0000110    nm7000003    nm0000109    nm7000002    nm0000102
+    Should Be Equal As Strings    ${bacon_path[0]}    nm0000110
+    Should Be Equal As Strings    ${bacon_path[1]}    nm7000003
+    Should Be Equal As Strings    ${bacon_path[2]}    nm0000109
+    Should Be Equal As Strings    ${bacon_path[3]}    nm7000002
+    Should Be Equal As Strings    ${bacon_path[4]}    nm0000102
 
 #Bacon Path from Kevin Spacey
-computeBaconPathPass
-    ${resp}=    Get Request    localhost    /api/v1/computeBaconPath?actorId=nm0000103    expected_status=404
+computeBaconPathFail
+    ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconPath?actorId=nm0000103    expected_status=404
