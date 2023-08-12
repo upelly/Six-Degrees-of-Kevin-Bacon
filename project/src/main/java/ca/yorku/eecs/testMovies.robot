@@ -222,7 +222,7 @@ computeBaconNumberPass
     ${bacon_number}=    Set Variable    ${resp["baconNumber"]}
     Should Be Equal As Integers    ${bacon_number}    2
 
-#Kevin Spacey is not connected to anything so he should fail
+#Kevin Spacey is not connected to anything so he should fail test
 computeBaconNumberFail
     ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconNumber?actorId=nm0000103    expected_status=404
 
