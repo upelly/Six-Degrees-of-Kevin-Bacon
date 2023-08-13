@@ -236,6 +236,14 @@ computeBaconPathPass
     Should Be Equal As Strings    ${bacon_path[3]}    nm7000002
     Should Be Equal As Strings    ${bacon_path[4]}    nm0000102
 
+computeBaconNumberPass1
+    ${headers}=    Create Dictionary    Content-Type=application/json
+    ${params}=    Create Dictionary   actorId=nm0000102
+    ${resp}=    GET On Session    localhost    /api/v1/computeBaconNumber    params=${params}     headers=${headers}    expected_status=200
+    Dictionary Should Contain Key    ${resp.json()}    baconNumber
+    Dictionary Should Contain Value    ${resp.json()}    ${0}
+
+
 #Bacon Path from Kevin Spacey
 computeBaconPathFail
     ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconPath?actorId=nm0000103    expected_status=404
