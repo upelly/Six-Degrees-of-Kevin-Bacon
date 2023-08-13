@@ -11,6 +11,7 @@ import org.neo4j.driver.v1.types.Node;
 
 import java.io.IOException;
 
+import java.net.URI;
 import java.util.*;
 
 public class Neo4jMovies {
@@ -278,6 +279,15 @@ public class Neo4jMovies {
 
             String movieId = queryMap.get("movieId");
 
+            //if improper formatting
+            if (movieId == null){
+                String response = "Improper formatting. Movie was not added.";
+                Utils.sendString(request, response, 400);
+            }
+
+
+
+
             // If improper formatting
             if (movieId == null) {
                 String response = "Improper formatting. Movie was not added.";
@@ -405,74 +415,106 @@ public class Neo4jMovies {
     //the bacon number as well
     public List<String> computeBaconHelper(HttpExchange request) throws IOException, JSONException {
 
-        // Extract and parse JSON data from URI
-        String query = request.getRequestURI().getQuery();
-        Map<String, String> queryMap = Utils.splitQuery(query);
+        URI uri = request.getRequestURI();
+        String query = uri.getQuery();
 
-        String actorId = queryMap.get("actorId");
-
-        List<String> shortestPath = null;
-
-        // Check if the actorId exists
-        if (!actorExists(actorId)) {
-            String response = "The actor with ID " + actorId + " does not exist!";
-            Utils.sendString(request, response, 404);
-            return null;
+        if (query == null) {
+            JSONObject result = new JSONObject();
+            result.put("Error", "BAD REQUEST");
+            Utils.sendString(request, result.toString(), 400);
         }
+        else {
+            Map<String, String> queryParam = Utils.splitQuery(query);
+            String actorId = queryParam.getOrDefault("actorId", null);
 
-        Graph graph = new Graph();
-        List<Record> actors = new ArrayList<Record>();
-        List<Record> movies = new ArrayList<Record>();
+            List<String> shortestPath = null;
 
-        try (Session session = driver.session()) {
-            try (Transaction tx = session.beginTransaction()) {
-                //add actors to the graph
-                StatementResult result = tx.run(
-                        "MATCH (a:Actor) RETURN a"
-                );
-                while(result.hasNext()){
-                    Record temp = result.next();
-                    graph.addVertex(temp.get("a").asNode().get("actorId").asString());
-                    actors.add(temp);
-                }
+            // Check if the actorId exists
+            if (!actorExists(actorId)) {
+                String response = "The actor with ID " + actorId + " does not exist!";
+                Utils.sendString(request, response, 404);
+                return null;
+            }
 
-                //add movies to the graph
-                StatementResult result2 = tx.run(
-                        "MATCH (m:Movie) RETURN m"
-                );
-                while(result2.hasNext()){
-                    Record temp = result2.next();
-                    graph.addVertex(temp.get("m").asNode().get("movieId").asString());
-                    movies.add(temp);
-                }
+            Graph graph = new Graph();
+            List<Record> actors = new ArrayList<Record>();
+            List<Record> movies = new ArrayList<Record>();
 
-                for(int i=0; i<actors.size(); i++){
-                    for(int j=0; j<movies.size(); j++){
-                        Node actorNode = actors.get(i).get("a").asNode();
-                        Node movieNode = movies.get(j).get("m").asNode();
-                        StatementResult result3 = tx.run(
-                                "MATCH (a:Actor {actorId: $actorId})-[r:ACTED_IN]->(m:Movie {movieId: $movieId}) RETURN r",
-                                parameters("actorId", actorNode.get("actorId").asString(), "movieId", movieNode.get("movieId").asString())
-                        );
-                        if(result3.hasNext()){
-                            graph.addEdge(actorNode.get("actorId").asString(), movieNode.get("movieId").asString());
-                            //System.out.println("vertex added between " + actorNode.get("name").asString() + " and " + movieNode.get("name").asString());
+            try (Session session = driver.session()) {
+                try (Transaction tx = session.beginTransaction()) {
+                    //add actors to the graph
+                    StatementResult result = tx.run(
+                            "MATCH (a:Actor) RETURN a"
+                    );
+                    while(result.hasNext()){
+                        Record temp = result.next();
+                        graph.addVertex(temp.get("a").asNode().get("actorId").asString());
+                        actors.add(temp);
+                    }
+
+                    //add movies to the graph
+                    StatementResult result2 = tx.run(
+                            "MATCH (m:Movie) RETURN m"
+                    );
+                    while(result2.hasNext()){
+                        Record temp = result2.next();
+                        graph.addVertex(temp.get("m").asNode().get("movieId").asString());
+                        movies.add(temp);
+                    }
+
+                    for(int i=0; i<actors.size(); i++){
+                        for(int j=0; j<movies.size(); j++){
+                            Node actorNode = actors.get(i).get("a").asNode();
+                            Node movieNode = movies.get(j).get("m").asNode();
+                            StatementResult result3 = tx.run(
+                                    "MATCH (a:Actor {actorId: $actorId})-[r:ACTED_IN]->(m:Movie {movieId: $movieId}) RETURN r",
+                                    parameters("actorId", actorNode.get("actorId").asString(), "movieId", movieNode.get("movieId").asString())
+                            );
+                            if(result3.hasNext()){
+                                graph.addEdge(actorNode.get("actorId").asString(), movieNode.get("movieId").asString());
+                                //System.out.println("vertex added between " + actorNode.get("name").asString() + " and " + movieNode.get("name").asString());
+                            }
                         }
                     }
+
+                    shortestPath = graph.findShortestPath(actorId, "nm0000102");
+                    shortestPath.forEach(System.out::println);
+                    //To do: send this back in response in computeBaconNumber and in computeBaconPath
+
                 }
-
-                shortestPath = graph.findShortestPath(actorId, "nm0000102");
-                Collections.reverse(shortestPath);
-                shortestPath.forEach(System.out::println);
-                //To do: send this back in response in computeBaconNumber and in computeBaconPath
-
             }
-        }
 
-        return shortestPath;
+            return shortestPath;
+        }
+        return null;
     }
 
-    public void computeBaconNumber(HttpExchange request) {
+    public void computeBaconNumber(HttpExchange request) throws IOException, JSONException {
+
+        try {
+
+            if (computeBaconHelper(request).equals(null)) {
+                String response = "Improper formatting";
+                Utils.sendString(request, response, 400);
+            }
+
+            if (computeBaconHelper(request).isEmpty()) {
+                String response = "No path to Kevin Bacon";
+                Utils.sendString(request, response, 404);
+            }
+
+            int listSize = computeBaconHelper(request).size() / 2;
+
+            JSONObject baconNumber = new JSONObject();
+            baconNumber.put("baconNumber", listSize);
+            Utils.sendString(request, baconNumber.toString(), 200);
+
+        }
+
+        catch (Exception e) {
+            String response = "Internal Server Error: " + e.getMessage();
+            Utils.sendString(request, response, 500);
+        }
 
     }
 
@@ -507,5 +549,6 @@ public class Neo4jMovies {
     public void close() {
         driver.close();
     }
+
 }
 
