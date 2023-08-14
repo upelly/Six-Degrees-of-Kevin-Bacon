@@ -487,16 +487,12 @@ public class Neo4jMovies {
             return shortestPath;
         }
         return null;
+
     }
 
     public void computeBaconNumber(HttpExchange request) throws IOException, JSONException {
 
         try {
-
-            if (computeBaconHelper(request).equals(null)) {
-                String response = "Improper formatting";
-                Utils.sendString(request, response, 400);
-            }
 
             if (computeBaconHelper(request).isEmpty()) {
                 String response = "No path to Kevin Bacon";
@@ -506,6 +502,7 @@ public class Neo4jMovies {
             int listSize = computeBaconHelper(request).size() / 2;
 
             JSONObject baconNumber = new JSONObject();
+
             baconNumber.put("baconNumber", listSize);
             Utils.sendString(request, baconNumber.toString(), 200);
 
