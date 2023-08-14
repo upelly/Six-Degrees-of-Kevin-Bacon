@@ -387,7 +387,7 @@ public class Neo4jMovies {
 
                     // Extract attributes from the actor node and add them to the JSON object
                     actorJson.put("name", actorNode.get("name").asString());
-                    actorJson.put("hasOscar", actorNode.get("hasOscar").asBoolean());
+                    actorJson.put("actorId", actorNode.get("actorId").asString());
                     // Add more attributes as needed
 
                     jsonArray.put(actorJson); // Add the JSON object to the array
@@ -397,7 +397,6 @@ public class Neo4jMovies {
                 responseJson.put("actors", jsonArray); // Add the array to the response JSON
 
                 String response = responseJson.toString(4);
-                System.out.println(response);
                 Utils.sendString(request, response, 200);
             }
         }
