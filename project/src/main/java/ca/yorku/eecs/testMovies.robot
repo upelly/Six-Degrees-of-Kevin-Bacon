@@ -219,7 +219,7 @@ relationshipsSetup16
 #Bacon Number from Liam Hemsworth
 computeBaconNumberPass
     ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconNumber?actorId=nm0000110    expected_status=200
-    ${bacon_number}=    Set Variable    ${resp["baconNumber"]}
+    ${bacon_number}=    Set Variable    ${resp.json()["baconNumber"]}
     Should Be Equal As Integers    ${bacon_number}    2
 
 #Kevin Spacey is not connected to anything so he should fail test
