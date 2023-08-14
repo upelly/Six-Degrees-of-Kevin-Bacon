@@ -31,23 +31,18 @@ public class Handler implements HttpHandler{
             }
             else if (path.contains("getActor")) {
                 nm.getActor(request);
-                System.out.println("We got the actor");
             }
             else if (path.contains("getMovie")) {
                 nm.getMovie(request);
-                System.out.println("We got the movie");
             }
             else if (path.contains("hasRelationship")) {
                 nm.hasRelationship(request);
-                System.out.println("We have checked the relationship");
             }
             else if (path.contains("computeBaconNumber")) {
                 nm.computeBaconNumber(request);
-                System.out.println("We have found the Bacon number");
             }
             else if (path.contains("computeBaconPath")) {
                 nm.computeBaconPath(request);
-                System.out.println("We have found the Bacon path");
             }
             else
                 Utils.sendString(request, "Unimplemented method\n", 501);
