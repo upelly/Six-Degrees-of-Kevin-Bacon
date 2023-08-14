@@ -522,6 +522,8 @@ public class Neo4jMovies {
         try{
             List<String> result = computeBaconHelper(request);
 
+            Collections.reverse(result);
+
             System.out.println("this is the list: " + result.toString());
 
             if (result.equals(new ArrayList<>())){
