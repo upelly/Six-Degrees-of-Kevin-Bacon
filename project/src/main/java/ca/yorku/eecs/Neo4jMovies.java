@@ -478,7 +478,6 @@ public class Neo4jMovies {
                     }
 
                     shortestPath = graph.findShortestPath(actorId, "nm0000102");
-                    shortestPath.forEach(System.out::println);
                     //To do: send this back in response in computeBaconNumber and in computeBaconPath
 
                 }
@@ -497,6 +496,7 @@ public class Neo4jMovies {
             if (computeBaconHelper(request).isEmpty()) {
                 String response = "No path to Kevin Bacon";
                 Utils.sendString(request, response, 404);
+                return;
             }
 
             int listSize = computeBaconHelper(request).size() / 2;
@@ -509,6 +509,7 @@ public class Neo4jMovies {
         }
 
         catch (Exception e) {
+            System.out.println("We have an error" + e.getMessage());
             String response = "Internal Server Error: " + e.getMessage();
             Utils.sendString(request, response, 500);
         }
@@ -520,8 +521,6 @@ public class Neo4jMovies {
             List<String> result = computeBaconHelper(request);
 
             Collections.reverse(result);
-
-            System.out.println("this is the list: " + result.toString());
 
             if (result.equals(new ArrayList<>())){
                 Utils.sendString(request, "There is no path", 404);
