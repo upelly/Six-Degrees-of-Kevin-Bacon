@@ -279,14 +279,6 @@ public class Neo4jMovies {
 
             String movieId = queryMap.get("movieId");
 
-            //if improper formatting
-            if (movieId == null){
-                String response = "Improper formatting. Movie was not added.";
-                Utils.sendString(request, response, 400);
-            }
-
-
-
 
             // If improper formatting
             if (movieId == null) {

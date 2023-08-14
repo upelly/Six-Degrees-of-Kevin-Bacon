@@ -213,9 +213,27 @@ relationshipsSetup16
     ${resp}=    PUT On Session    localhost    /api/v1/addRelationship    json=${params}    headers=${headers}    expected_status=200
 
 #----------------------------GET Test Cases----------------------------
-#Someone else please do other tests (delete this comment when finished)
+getActorPass
+    ${headers}=    Create Dictionary    Content-Type=application/json
+    ${params}=    Create Dictionary    actorId=nm0000103
+    ${resp}=    GET On Session    localhost    /api/v1/getActor    params=${params}    headers=${headers}    expected_status=200
 
-#Bacon tests (delete this comment when finished other tests)
+getActorFail
+    ${headers}=    Create Dictionary    Content-Type=application/json
+    ${params}=    Create Dictionary    actorId=nm9999999
+    ${resp}=    GET On Session    localhost    /api/v1/getActor    params=${params}    headers=${headers}    expected_status=404
+
+getMoviePass
+    ${headers}=    Create Dictionary    Content-Type=application/json
+    ${params}=    Create Dictionary    movieId=nm7000002
+    ${resp}=    GET On Session    localhost    /api/v1/getMovie    params=${params}    headers=${headers}    expected_status=200
+
+getMovieFail
+    ${headers}=    Create Dictionary    Content-Type=application/json
+    ${params}=    Create Dictionary    movieId=nonexistent_movie_id
+    ${resp}=    GET On Session    localhost    /api/v1/getMovie    params=${params}    headers=${headers}    expected_status=404
+
+
 #Bacon Number from Liam Hemsworth
 computeBaconNumberPass
     ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconNumber?actorId=nm0000110    expected_status=200
