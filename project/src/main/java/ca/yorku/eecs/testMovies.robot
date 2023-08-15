@@ -215,23 +215,39 @@ relationshipsSetup16
 #----------------------------GET Test Cases----------------------------
 getActorPass
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    actorId=nm0000103
-    ${resp}=    GET On Session    localhost    /api/v1/getActor    params=${params}    headers=${headers}    expected_status=200
+    ${url}=  Set Variable  /api/v1/getActor?actorId=nm0000107
+    ${resp}=    GET On Session    localhost    url=${url}    headers=${headers}    expected_status=200
+    ${response_json}=    Evaluate    json.loads('''${resp.content}''')    json
+    ${expected_json}=    Create Dictionary   actorId=nm0000107   hasOscar=True   movies=['nm7000002']   name=Keanu Reeves
+
+    #Verify each field of the JSON response individually
+    Should Be Equal As Strings    ${response_json['actorId']}    ${expected_json['actorId']}
+    Should Be Equal As Strings    ${response_json['hasOscar']}    ${expected_json['hasOscar']}
+    Should Be Equal As Strings    ${response_json['movies']}    ${expected_json['movies']}
+    Should Be Equal As Strings    ${response_json['name']}    ${expected_json['name']}
 
 getActorFail
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    actorId=nm9999999
-    ${resp}=    GET On Session    localhost    /api/v1/getActor    params=${params}    headers=${headers}    expected_status=404
+    ${url}=    Set Variable    /api/v1/getActor?actorId=nm0000207
+    ${resp}=    GET On Session    localhost    url=${url}    headers=${headers}    expected_status=404
 
 getMoviePass
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    movieId=nm7000002
-    ${resp}=    GET On Session    localhost    /api/v1/getMovie    params=${params}    headers=${headers}    expected_status=200
+    ${url}=    Set Variable     http://localhost:8080/api/v1/getMovie?movieId=nm7000004
+    ${resp}=    GET On Session    localhost    url=${url}    headers=${headers}    expected_status=200
+    ${response_json}=   Evaluate    json.loads('''${resp.content}''')    json
+    ${expected_json}=   Create Dictionary    actors=['nm0000111', 'nm0000108', 'nm0000112']    movieId=nm7000004     name=Thor: Love and Thunder
+
+    # Verify each JSON field individually
+    Should Be Equal As Strings    ${response_json['actors']}    ${expected_json['actors']}
+    Should Be Equal As Strings    ${response_json['movieId']}    ${expected_json['movieId']}
+    Should Be Equal As Strings    ${response_json['name']}    ${expected_json['name']}
+
 
 getMovieFail
     ${headers}=    Create Dictionary    Content-Type=application/json
-    ${params}=    Create Dictionary    movieId=nonexistent_movie_id
-    ${resp}=    GET On Session    localhost    /api/v1/getMovie    params=${params}    headers=${headers}    expected_status=404
+    ${url}=    Set Variable     http://localhost:8080/api/v1/getMovie?movieId=nm7000069
+    ${resp}=    GET On Session    localhost    url=${url}    headers=${headers}    expected_status=404
 
 
 #Bacon Number from Liam Hemsworth
