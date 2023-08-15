@@ -376,8 +376,8 @@ public class Neo4jMovies {
     public void getOscarActor(HttpExchange request) throws IOException, JSONException {
 
         try (Session session = driver.session()) {
-            int actorCount = session.readTransaction(ux -> {
-                StatementResult result = ux.run("MATCH (a:Actor) RETURN count(a) AS actorCount");
+            int actorCount = session.readTransaction(tx -> {
+                StatementResult result = tx.run("MATCH (a:Actor) RETURN count(a) AS actorCount");
                 Record record = result.single();
                 return record.get("actorCount").asInt();
             });
