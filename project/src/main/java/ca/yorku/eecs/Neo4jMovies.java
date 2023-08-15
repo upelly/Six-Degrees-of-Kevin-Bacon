@@ -376,7 +376,21 @@ public class Neo4jMovies {
     public void getOscarActor(HttpExchange request) throws IOException, JSONException {
 
         try (Session session = driver.session()) {
+            int nodeCount = session.readTransaction(ux -> {
+                StatementResult result = ux.run("MATCH (n) RETURN count(n) AS nodeCount");
+                Record record = result.single();
+                return record.get("nodeCount").asInt();
+            });
+
+            if (nodeCount == 0) {
+                String message = "Error: Database empty";
+                Utils.sendString(request, message, 404);
+            }
+        }
+
+        try (Session session = driver.session()) {
             try (Transaction tx = session.beginTransaction()) {
+
                 StatementResult result = tx.run("MATCH (a:Actor {hasOscar: true}) RETURN a");
                 JSONArray jsonArray = new JSONArray(); // Array to hold actor objects
 
@@ -397,7 +411,9 @@ public class Neo4jMovies {
                 responseJson.put("actors", jsonArray); // Add the array to the response JSON
 
                 String response = responseJson.toString(4);
+
                 Utils.sendString(request, response, 200);
+
             }
         }
     }
