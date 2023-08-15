@@ -376,15 +376,16 @@ public class Neo4jMovies {
     public void getOscarActor(HttpExchange request) throws IOException, JSONException {
 
         try (Session session = driver.session()) {
-            int nodeCount = session.readTransaction(ux -> {
-                StatementResult result = ux.run("MATCH (n) RETURN count(n) AS nodeCount");
+            int actorCount = session.readTransaction(tx -> {
+                StatementResult result = tx.run("MATCH (a:Actor) RETURN count(a) AS actorCount");
                 Record record = result.single();
-                return record.get("nodeCount").asInt();
+                return record.get("actorCount").asInt();
             });
 
-            if (nodeCount == 0) {
-                String message = "Error: Database empty";
+            if (actorCount == 0) {
+                String message = "Error: No Actors in the database";
                 Utils.sendString(request, message, 404);
+                return;
             }
         }
 
