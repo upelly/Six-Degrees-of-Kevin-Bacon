@@ -7,6 +7,10 @@ Suite Setup    Create Session    localhost    http://localhost:8080
 
 *** Test Cases ***
 #----------------------------PUT Test Cases----------------------------
+
+getOscarActorFail
+    ${resp}=    GET On Session    localhost    url=/api/v1/getOscarActor    expected_status=404
+
 addActorPass
     ${headers}=    Create Dictionary    Content-Type=application/json
     ${params}=    Create Dictionary    name=Kevin Bacon    actorId=nm0000102
@@ -281,3 +285,22 @@ computeBaconNumberPass1
 #Bacon Path from Kevin Spacey
 computeBaconPathFail
     ${resp}=    GET On Session    localhost    url=/api/v1/computeBaconPath?actorId=nm0000103    expected_status=404
+
+
+getOscarActorPass
+    ${resp}=    GET On Session    localhost    url=/api/v1/getOscarActor    expected_status=200
+    ${actors}=         Set Variable    ${resp.json()["actors"]}
+    ${KevinSpacey}=    Set Variable    ${actors}[0]
+    ${TomCruise}=      Set Variable    ${actors}[1]
+    ${KeanuReeves}=    Set Variable    ${actors}[2]
+    ${ChristianBale}=  Set Variable    ${actors}[3]
+    Should Be Equal As Strings    ${KevinSpacey["actorId"]}    nm0000103
+    Should Be Equal As Strings    ${KevinSpacey["name"]}    Kevin Spacey
+    Should Be Equal As Strings    ${TomCruise["actorId"]}    nm0000106
+    Should Be Equal As Strings    ${TomCruise["name"]}    Tom Cruise
+    Should Be Equal As Strings    ${KeanuReeves["actorId"]}    nm0000107
+    Should Be Equal As Strings    ${KeanuReeves["name"]}    Keanu Reeves
+    Should Be Equal As Strings    ${ChristianBale["actorId"]}    nm0000112
+    Should Be Equal As Strings    ${ChristianBale["name"]}    Christian Bale
+
+
